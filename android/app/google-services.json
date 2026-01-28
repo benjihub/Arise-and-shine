@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "567945579519",
+    "project_id": "arise-and-shine-tanzania",
+    "storage_bucket": "arise-and-shine-tanzania.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567945579519:android:543e82a17e76a5389b35ca",
+        "android_client_info": {
+          "package_name": "com.indexhosting.arise_and_shine"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "567945579519-uvgn6og91821i8ea1k0kcs02qct34dhi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.indexhosting.arise_and_shine",
+            "certificate_hash": "44217b608191d486633d0c0d4857991124a441bf"
+          }
+        },
+        {
+          "client_id": "567945579519-pi4507bmd1v074btkv0dob22vq7kqo7q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWLVpZNdU0c09rjImysCSs-1yWUKPLTDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "567945579519-pi4507bmd1v074btkv0dob22vq7kqo7q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

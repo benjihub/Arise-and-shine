@@ -1,0 +1,2 @@
+D:/DESKTOPP/arise_and_shine/android/app/.cxx/Debug/5g42nq1o/x86/CMakeFiles/edit_cache.dir
+D:/DESKTOPP/arise_and_shine/android/app/.cxx/Debug/5g42nq1o/x86/CMakeFiles/rebuild_cache.dir
