@@ -1,13 +1,8 @@
+import 'dart:async';
+
 import 'package:arise_and_shine/components/dot_indicators.dart';
-import 'package:arise_and_shine/components/skleton/others/offers_skelton.dart';
-import 'package:arise_and_shine/components/skleton/skelton.dart';
-import 'package:arise_and_shine/constants/constants.dart';
-import 'package:arise_and_shine/controllers/ministry_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-// import 'package:share_plus/share_plus.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
 
 class SliderCarousel extends StatefulWidget {
   const SliderCarousel({super.key});
@@ -20,173 +15,156 @@ class _SliderCarouselState extends State<SliderCarousel> {
   final CarouselSliderController _carouselController =
       CarouselSliderController();
 
-  final MinistryController ministryController = Get.find<MinistryController>();
+  // Local slider images
+  final List<String> sliderImages = [
+    'assets/images/slider1.jpg',
+    'assets/images/slider2.jpg',
+    'assets/images/slider3.jpg',
+  ];
 
   int _selectedIndex = 0;
+  bool _autoPlayEnabled = true; // Control auto-play state
+  Timer? _resumeTimer; // Timer to resume auto-play after manual interaction
+
+  @override
+  void dispose() {
+    _resumeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _handleManualInteraction() {
+    // Pause auto-play when user manually swipes
+    if (_autoPlayEnabled) {
+      setState(() {
+        _autoPlayEnabled = false;
+      });
+    }
+
+    // Cancel existing timer
+    _resumeTimer?.cancel();
+
+    // Resume auto-play after 3 seconds of no interaction
+    _resumeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _autoPlayEnabled = true;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double availableWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : context.screenWidth;
-        final double desiredHeight = availableWidth * (720 / 1280);
-        final double carouselHeight =
-            desiredHeight.clamp(260.0, 520.0).toDouble();
+        // Calculate height as approximately 40% of screen height
+        final double screenHeight = MediaQuery.of(context).size.height;
+        final double statusBarHeight = MediaQuery.of(context).padding.top;
+        final double carouselHeight = (screenHeight - statusBarHeight) * 0.4;
 
-        return Obx(() {
-          if (ministryController.imageUrls.isEmpty) {
-            return const OffersSkelton();
-          }
+        return SizedBox(
+          height: carouselHeight,
+          width: double.infinity,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Main carousel slider - no GestureDetector wrapper needed
+              Positioned.fill(
+                child: CarouselSlider(
+                  items: sliderImages.map((imagePath) {
+                    return _buildSlideItem(imagePath);
+                  }).toList(),
+                  carouselController: _carouselController,
+                  options: CarouselOptions(
+                    height: carouselHeight,
+                    viewportFraction: 1.0,
+                    // Auto-play controlled by state
+                    autoPlay: _autoPlayEnabled,
+                    enableInfiniteScroll: true,
+                    enlargeCenterPage: false,
+                    padEnds: false,
+                    autoPlayInterval: const Duration(seconds: 5),
+                    autoPlayAnimationDuration:
+                        const Duration(milliseconds: 800),
+                    autoPlayCurve: Curves.easeInOut,
+                    // Enable manual scrolling with physics for smooth feel
+                    scrollPhysics: const BouncingScrollPhysics(),
+                    onPageChanged: (index, reason) {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
 
-          return SizedBox(
-            height: carouselHeight,
-            width: double.infinity,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CarouselSlider(
-                    items: ministryController.imageUrls.map((imageUrl) {
-                      return ClipRRect(
-                        // borderRadius:
-                        //     const BorderRadius.all(Radius.circular(16)),
-                        child: CachedNetworkImage(
-                          fit: BoxFit.cover,
-                          imageUrl: imageUrl,
-                          imageBuilder: (context, imageProvider) => Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          placeholder: (context, url) => const Skeleton(),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                        ),
-                      );
-                    }).toList(),
-                    carouselController: _carouselController,
-                    options: CarouselOptions(
-                      viewportFraction: 1,
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      autoPlayInterval: const Duration(seconds: 6),
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
-                    ),
+                      // Detect manual swipe and pause auto-play
+                      if (reason == CarouselPageChangedReason.manual) {
+                        _handleManualInteraction();
+                      }
+                    },
                   ),
                 ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: SizedBox(
-                      height: 16,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: List.generate(
-                          ministryController.imageUrls.length,
-                          (index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                left: defaultPadding / 4,
-                              ),
-                              child: DotIndicator(
-                                isActive: index == _selectedIndex,
-                                activeColor: Colors.white70,
-                                inActiveColor: Colors.white54,
-                              ),
-                            );
-                          },
-                        ),
+              ),
+
+              // Gradient overlay for better dot visibility (ignore pointer to allow touches through)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.2),
+                          Colors.black.withValues(alpha: 0.5),
+                        ],
+                        stops: const [0.6, 0.85, 1.0],
                       ),
                     ),
                   ),
-                  // .box
-                  // .withGradient(const LinearGradient(
-                  //   colors: [
-                  //     Colors.transparent,
-                  //     Color.fromARGB(178, 3, 32, 252),
-                  //   ],
-                  //   begin: Alignment.topCenter,
-                  //   end: Alignment.bottomCenter,
-                  // ))
-                  // .make(),
                 ),
-                // Container(
-                //   decoration: const BoxDecoration(
-                //     borderRadius: BorderRadius.all(
-                //       Radius.circular(16),
-                //     ),
-                //     gradient: LinearGradient(
-                //       colors: [
-                //         Colors.transparent,
-                //         Color.fromARGB(199, 3, 32, 252),
-                //       ],
-                //       stops: [
-                //         0.6,
-                //         1.0
-                //       ], // Adjust gradient stops for smoother blending
-                //       begin: Alignment.topCenter,
-                //       end: Alignment.bottomCenter,
-                //     ),
-                //   ),
-                // ),
-                // Center(
-                //   child: Padding(
-                //     padding: const EdgeInsets.all(defaultPadding),
-                //     child: Column(
-                //       mainAxisAlignment: MainAxisAlignment.end,
-                //       children: [
-                //         Padding(
-                //           padding: const EdgeInsets.all(8.0),
-                //           child: "invite_friend"
-                //               .tr
-                //               .text
-                //               .size(16)
-                //               .center
-                //               .bold
-                //               .white
-                //               .make(),
-                //         ),
-                //         OutlinedButton(
-                //           onPressed: () {
-                //             Share.share(
-                //               'Check out Arise & Shine App using: https://play.google.com/store/apps/details?id=com.indexhosting.arise_and_shine',
-                //             );
-                //           },
-                //           style: OutlinedButton.styleFrom(
-                //             side: const BorderSide(color: Colors.white),
-                //             shape: RoundedRectangleBorder(
-                //               borderRadius: BorderRadius.circular(50),
-                //             ),
-                //             padding: const EdgeInsets.symmetric(
-                //                 horizontal: 16, vertical: 12),
-                //           ),
-                //           child: Text(
-                //             "send_invite".tr,
-                //             style: const TextStyle(
-                //               color: Colors.white,
-                //               fontSize: 12,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           ),
-                //         )
-                //       ],
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          );
-        });
+              ),
+
+              // Dot indicators at the bottom
+              Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    sliderImages.length,
+                    (index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: DotIndicator(
+                          isActive: index == _selectedIndex,
+                          activeColor: Colors.white,
+                          inActiveColor: Colors.white.withValues(alpha: 0.4),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
       },
+    );
+  }
+
+  Widget _buildSlideItem(String imagePath) {
+    // Use FittedBox to prevent cropping while maintaining aspect ratio
+    // This ensures full image visibility without distortion
+    return Container(
+      color: Colors.black, // Background for letterboxing if needed
+      child: Center(
+        child: Image.asset(
+          imagePath,
+          fit: BoxFit.contain, // Shows full image, may add letterboxing
+          width: double.infinity,
+          height: double.infinity,
+        ),
+      ),
     );
   }
 }

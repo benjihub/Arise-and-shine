@@ -22,25 +22,22 @@ class CardButtonWithTitle extends StatelessWidget {
     return Container(
       width: MediaQuery.of(context).orientation == Orientation.landscape
           ? 0.25 * context.screenWidth
-          : 0.28 * context.screenWidth,
+          : 0.35 * context.screenWidth,
       decoration: BoxDecoration(
         color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         borderRadius: const BorderRadius.all(Radius.circular(8)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(4.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width:
-                  (MediaQuery.of(context).orientation == Orientation.landscape
-                          ? 0.05 * screenWidth
-                          : 0.07 * screenWidth) *
-                      2,
+              width: double.infinity,
               height:
                   (MediaQuery.of(context).orientation == Orientation.landscape
-                          ? 0.05 * screenWidth
-                          : 0.07 * screenWidth) *
+                          ? 0.06 * screenWidth
+                          : 0.09 * screenWidth) *
                       2,
               decoration: BoxDecoration(
                 color: color,
@@ -59,8 +56,9 @@ class CardButtonWithTitle extends StatelessWidget {
               style: TextStyle(
                 fontSize:
                     MediaQuery.of(context).orientation == Orientation.landscape
-                        ? 0.02 * screenWidth
-                        : 0.025 * screenWidth,
+                        ? 0.025 * screenWidth
+                        : 0.035 * screenWidth,
+                fontWeight: FontWeight.w600,
                 overflow: TextOverflow.ellipsis,
               ),
             )

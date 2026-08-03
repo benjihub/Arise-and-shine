@@ -1,5 +1,5 @@
-import 'package:arise_and_shine/constants/constants.dart';
 import 'package:arise_and_shine/components/video_list.dart';
+import 'package:arise_and_shine/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -26,12 +26,13 @@ class _VideoSermonDetailsState extends State<VideoSermonDetails> {
 
     WakelockPlus.enable();
 
-    final videoId = YoutubePlayer.convertUrlToId(
-        widget.videoData['link'] ?? widget.videoData['videoId']);
+    final rawId = widget.videoData['link'] ?? widget.videoData['videoId'] ?? '';
+    final videoId =
+        YoutubePlayer.convertUrlToId(rawId.toString()) ?? rawId.toString();
 
     // Initialize the YouTube Player Controller
     _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId!,
+      initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
         autoPlay: false,
         mute: false,

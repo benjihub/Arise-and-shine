@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:arise_and_shine/components/app_drawer_profile_card.dart';
 import 'package:arise_and_shine/components/profile_menu_item_list_tile.dart';
 import 'package:arise_and_shine/constants/constants.dart';
@@ -7,7 +5,6 @@ import 'package:arise_and_shine/constants/firebase_consts.dart';
 import 'package:arise_and_shine/controllers/auth_controller.dart';
 import 'package:arise_and_shine/controllers/home_controller.dart';
 import 'package:arise_and_shine/controllers/profile_controller.dart';
-import 'package:arise_and_shine/screens/giving/giving_screen.dart';
 import 'package:arise_and_shine/screens/home/join_ministry/join_ministry.dart';
 import 'package:arise_and_shine/screens/home/more_info/more_info_screen.dart';
 import 'package:arise_and_shine/screens/home/prayer_request_mailer/prayer_request.dart';
@@ -22,8 +19,8 @@ import 'package:arise_and_shine/widgets/our_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -81,7 +78,10 @@ class AppDrawer extends StatelessWidget {
             Obx(
               () => SwitchListTile.adaptive(
                 value: homeController.isDarkMode.value,
-                onChanged: (_) => homeController.toggleTheme(),
+                onChanged: (_) {
+                  homeController.toggleTheme();
+                  Get.back(); // Close the drawer
+                },
                 title: Text(
                   "dark_mode".tr,
                   style: const TextStyle(fontSize: 14, height: 1),
@@ -104,18 +104,10 @@ class AppDrawer extends StatelessWidget {
               text: "give".tr,
               svgSrc: "assets/icons/give.svg",
               press: () {
-                if (Platform.isIOS) {
-                  launchUrl(
-                    Uri.parse(
-                        'https://ariseandshinetanzania.org/index.php/donations/'),
-                    mode: LaunchMode.externalApplication,
-                  );
-                } else {
-                  Get.to(
-                    () => const GivingScreen(),
-                    transition: Transition.fadeIn,
-                  );
-                }
+                launchUrl(
+                  Uri.parse('https://flutterwave.com/donate/uaqazpxgxebr'),
+                  mode: LaunchMode.inAppWebView,
+                );
               },
             ),
 

@@ -2,6 +2,7 @@ import 'package:arise_and_shine/components/audio_player.dart';
 import 'package:arise_and_shine/components/network_image_with_loader.dart';
 import 'package:arise_and_shine/components/radio_skelton.dart';
 import 'package:arise_and_shine/constants/constants.dart';
+import 'package:arise_and_shine/controllers/home_controller.dart';
 import 'package:arise_and_shine/controllers/ministry_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,7 @@ class HorizRadioList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var ministryController = Get.find<MinistryController>();
+    var homeController = Get.find<HomeController>();
 
     final radios = ministryController.radiosList;
 
@@ -36,9 +38,9 @@ class HorizRadioList extends StatelessWidget {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .bottomNavigationBarTheme
-                                .backgroundColor,
+                            color: homeController.isDarkMode.value
+                                ? Colors.grey[900]
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           padding: const EdgeInsets.all(12.0),

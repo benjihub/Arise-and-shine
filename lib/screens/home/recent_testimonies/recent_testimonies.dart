@@ -2,6 +2,7 @@ import 'package:arise_and_shine/components/home_sermon_skelton.dart';
 import 'package:arise_and_shine/components/network_image_with_loader.dart';
 import 'package:arise_and_shine/components/video_sermon_details.dart';
 import 'package:arise_and_shine/constants/constants.dart';
+import 'package:arise_and_shine/controllers/home_controller.dart';
 import 'package:arise_and_shine/controllers/sermons_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class RecentTestimonies extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var sermonsController = Get.find<SermonsController>();
+    var homeController = Get.find<HomeController>();
     var screenWidth = context.screenWidth;
 
     return Obx(
@@ -57,9 +59,9 @@ class RecentTestimonies extends StatelessWidget {
                               ? 0.5 * context.screenWidth
                               : 0.7 * context.screenWidth,
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .bottomNavigationBarTheme
-                                .backgroundColor,
+                            color: homeController.isDarkMode.value
+                                ? Colors.grey[900]
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           padding: const EdgeInsets.all(12.0),

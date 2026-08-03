@@ -1,8 +1,8 @@
 import 'package:arise_and_shine/components/network_image_banner.dart';
+import 'package:arise_and_shine/constants/constants.dart';
 import 'package:arise_and_shine/screens/media/download_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:arise_and_shine/constants/constants.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -35,27 +35,11 @@ class GalleryScreen extends StatelessWidget {
             return const Center(child: Text("No images found"));
           }
 
-          // Extract images with their timestamps from Firestore documents
-          List<Map<String, dynamic>> imageData = [];
-          for (var doc in snapshot.data!.docs) {
-            final String? imageUrl = doc['image_url'];
-            final Timestamp timestamp = doc['createdAt'] ?? Timestamp.now();
-
-            if (imageUrl != null) {
-              imageData.add({
-                'url': imageUrl,
-                'timestamp': timestamp,
-              });
-            }
-          }
-
-          // Sort images by timestamp
-          imageData.sort((a, b) => (b['timestamp'] as Timestamp)
-              .compareTo(a['timestamp'] as Timestamp));
-
-          // Extract sorted image URLs
-          final List<String> sortedImages =
-              imageData.map((data) => data['url'] as String).toList();
+          // Extract image URLs from Firestore documents (already sorted by query)
+          final List<String> imageUrls = snapshot.data!.docs
+              .map((doc) => doc['image_url'] as String?)
+              .whereType<String>()
+              .toList();
 
           return CustomScrollView(
             slivers: [
@@ -63,7 +47,7 @@ class GalleryScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(12.0),
                 sliver: SliverToBoxAdapter(
                   child: NetworkImageBanner(
-                    image: sortedImages.isNotEmpty ? sortedImages[0] : '',
+                    image: imageUrls.isNotEmpty ? imageUrls[0] : '',
                     press: () {},
                   ),
                 ),
@@ -81,7 +65,7 @@ class GalleryScreen extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
                       return NetworkImageBanner(
-                        image: sortedImages[index],
+                        image: imageUrls[index],
                         press: () {
                           Navigator.push(
                             context,
@@ -100,12 +84,12 @@ class GalleryScreen extends StatelessWidget {
                                     //     Icons.share,
                                     //   ),
                                     //   onPressed: () async {
-                                    //     final url = sortedImages[index];
+                                    //     final url = imageUrls[index];
                                     //     await Share.share(url);
                                     //   },
                                     // ),
                                     DownloadButton(
-                                        imageUrl: sortedImages[index]),
+                                        imageUrl: imageUrls[index]),
                                   ],
                                 ),
                                 body: PhotoViewGallery.builder(
@@ -114,7 +98,7 @@ class GalleryScreen extends StatelessWidget {
                                       (BuildContext context, int pageIndex) {
                                     return PhotoViewGalleryPageOptions(
                                       imageProvider:
-                                          NetworkImage(sortedImages[pageIndex]),
+                                          NetworkImage(imageUrls[pageIndex]),
                                       initialScale:
                                           PhotoViewComputedScale.contained,
                                       minScale:
@@ -122,10 +106,10 @@ class GalleryScreen extends StatelessWidget {
                                       maxScale:
                                           PhotoViewComputedScale.covered * 2,
                                       heroAttributes: PhotoViewHeroAttributes(
-                                          tag: sortedImages[pageIndex]),
+                                          tag: imageUrls[pageIndex]),
                                     );
                                   },
-                                  itemCount: sortedImages.length,
+                                  itemCount: imageUrls.length,
                                   loadingBuilder: (context, event) => Center(
                                     child: CircularProgressIndicator(
                                       value: event == null
@@ -150,7 +134,7 @@ class GalleryScreen extends StatelessWidget {
                         },
                       );
                     },
-                    childCount: sortedImages.length,
+                    childCount: imageUrls.length,
                   ),
                 ),
               ),

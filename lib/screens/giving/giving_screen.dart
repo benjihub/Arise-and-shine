@@ -6,6 +6,7 @@ import 'package:arise_and_shine/controllers/profile_controller.dart';
 import 'package:arise_and_shine/widgets/our_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GivingScreen extends StatefulWidget {
   const GivingScreen({super.key});
@@ -79,7 +80,7 @@ class _GivingScreenState extends State<GivingScreen> {
                     child: Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value: selectedCategory,
+                          initialValue: selectedCategory,
                           items: categories
                               .map((category) => DropdownMenuItem<String>(
                                     value: category,
@@ -200,6 +201,38 @@ class _GivingScreenState extends State<GivingScreen> {
                       title: "submit".tr,
                       color: primaryColor,
                       textColor: whiteColor),
+                ),
+                const SizedBox(height: 20),
+                // Secured by Flutterwave badge
+                Center(
+                  child: InkWell(
+                    onTap: () async {
+                      final url = Uri.parse('https://flutterwave.com');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.lock_outline,
+                          size: 18,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Secured by Flutterwave',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 // 10.heightBox,
                 // isLoading

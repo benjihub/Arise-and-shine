@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:arise_and_shine/components/top_home_button.dart';
 import 'package:arise_and_shine/constants/constants.dart';
-import 'package:arise_and_shine/screens/giving/giving_screen.dart';
 import 'package:arise_and_shine/widgets/loading_indicator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -57,18 +54,10 @@ class _ProgramLineupState extends State<ProgramLineup>
               icon: Icons.volunteer_activism,
               title: "give".tr,
               onPress: () {
-                if (Platform.isIOS) {
-                  launchUrl(
-                    Uri.parse(
-                        'https://ariseandshinetanzania.org/index.php/donations/'),
-                    mode: LaunchMode.externalApplication,
-                  );
-                } else {
-                  Get.to(
-                    () => const GivingScreen(),
-                    transition: Transition.fadeIn,
-                  );
-                }
+                launchUrl(
+                  Uri.parse('https://flutterwave.com/donate/uaqazpxgxebr'),
+                  mode: LaunchMode.inAppWebView,
+                );
               },
             ),
           ],

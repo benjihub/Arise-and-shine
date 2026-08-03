@@ -42,12 +42,15 @@ class MinistryController extends GetxController {
 
   @override
   void onInit() {
-    fetchSliderImages();
-    fetchTvLink();
-    fetchRadios();
-    fetchsocialsList();
-    fetchSettings();
-    fetchEvents();
+    // Run all Firebase fetches in parallel for faster loading
+    Future.wait([
+      fetchSliderImages(),
+      fetchTvLink(),
+      fetchRadios(),
+      fetchsocialsList(),
+      fetchSettings(),
+      fetchEvents(),
+    ]);
     super.onInit();
   }
 

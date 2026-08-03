@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:arise_and_shine/constants/constants.dart';
 import 'package:arise_and_shine/constants/firebase_consts.dart';
 import 'package:arise_and_shine/controllers/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
@@ -48,8 +49,8 @@ class ProfileController extends GetxController {
     super.onInit();
 
     _connectivity.onConnectivityChanged.listen(
-      (result) {
-        if (result == ConnectivityResult.none) {
+      (List<ConnectivityResult> results) {
+        if (results.contains(ConnectivityResult.none) || results.isEmpty) {
           isConnected.value = false;
         } else {
           isConnected.value = true;
@@ -86,8 +87,9 @@ class ProfileController extends GetxController {
   Future<void> initConnectivity() async {
     // Platform messages may fail, so we use a try/catch for PlatformException.
     try {
-      ConnectivityResult result = await _connectivity.checkConnectivity();
-      if (result == ConnectivityResult.none) {
+      List<ConnectivityResult> results =
+          await _connectivity.checkConnectivity();
+      if (results.contains(ConnectivityResult.none) || results.isEmpty) {
         isConnected.value = false;
       } else {
         isConnected.value = true;
@@ -284,20 +286,18 @@ class ProfileController extends GetxController {
 
     String? jsonProfileImage = prefs.getString('profileImage');
 
+    // Decode the JSON string back to the original data format
     if (jsonProfileData != null) {
-      // Decode the JSON string back to the original data format
       userDetails.value = json.decode(jsonProfileData);
-
-      String? preferredLanguage = userDetails['preferred_language'];
-
-      if (preferredLanguage != null && preferredLanguage.isNotEmpty) {
-        Get.updateLocale(Locale(preferredLanguage));
-      }
     }
 
-    if (jsonProfileImage != null) {
-      profileImage.value = jsonProfileImage;
+    String? preferredLanguage = userDetails['preferred_language'];
+
+    if (preferredLanguage != null && preferredLanguage.isNotEmpty) {
+      Get.updateLocale(Locale(preferredLanguage));
     }
+
+    profileImage.value = jsonProfileImage ?? '';
 
     // print(userDetails);
 
