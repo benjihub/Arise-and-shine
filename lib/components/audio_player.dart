@@ -170,7 +170,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               spreadRadius: 2,
                               blurRadius: 10,
                               offset: const Offset(0, 5),
@@ -210,14 +210,14 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.9),
+                  color: Theme.of(context).cardColor.withValues(alpha: 0.9),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       spreadRadius: 1,
                       blurRadius: 10,
                       offset: const Offset(0, -5),
@@ -228,7 +228,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                   children: [
                     Slider(
                       activeColor: primaryColor,
-                      inactiveColor: primaryColor.withOpacity(0.3),
+                      inactiveColor: primaryColor.withValues(alpha: 0.3),
                       onChanged: (value) {
                         final duration = _duration;
                         if (duration == null) return;
@@ -281,7 +281,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
+                                color: primaryColor.withValues(alpha: 0.3),
                                 spreadRadius: 2,
                                 blurRadius: 8,
                               ),

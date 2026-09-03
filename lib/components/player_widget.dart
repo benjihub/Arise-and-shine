@@ -110,7 +110,7 @@ class PlayerWidget extends StatelessWidget {
                 const Spacer(),
                 Slider(
                   activeColor: primaryColor,
-                  inactiveColor: primaryColor.withOpacity(0.3),
+                  inactiveColor: primaryColor.withValues(alpha: 0.3),
                   value: position.inMilliseconds / duration.inMilliseconds,
                   onChanged: (value) {
                     final newPosition = Duration(
