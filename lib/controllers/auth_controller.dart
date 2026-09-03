@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthController extends GetxController {
   //text controllers
@@ -227,49 +226,49 @@ class AuthController extends GetxController {
   }
 
   // Apple SignIn
-  Future<dynamic> appleSignIn() async {
-    try {
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+  // Future<dynamic> appleSignIn() async {
+  //   try {
+  //     final credential = await SignInWithApple.getAppleIDCredential(
+  //       scopes: [
+  //         AppleIDAuthorizationScopes.email,
+  //         AppleIDAuthorizationScopes.fullName,
+  //       ],
+  //     );
 
-      isSocialloading(true);
+  //     isSocialloading(true);
 
-      // Create full name from given and family name
-      final fullName = [credential.givenName, credential.familyName]
-          .where((name) => name != null)
-          .join(' ');
+  //     // Create full name from given and family name
+  //     final fullName = [credential.givenName, credential.familyName]
+  //         .where((name) => name != null)
+  //         .join(' ');
 
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: credential.identityToken,
-        accessToken: credential.authorizationCode,
-      );
+  //     final oauthCredential = OAuthProvider("apple.com").credential(
+  //       idToken: credential.identityToken,
+  //       accessToken: credential.authorizationCode,
+  //     );
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-      final User user = userCredential.user!;
+  //     final UserCredential userCredential =
+  //         await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+  //     final User user = userCredential.user!;
 
-      // Save user details including Apple-specific information
-      await _saveUserDetailsToFirestore(
-        user,
-        appleUserIdentifier: credential.userIdentifier,
-        appleEmail: credential.email,
-        appleName: fullName.isNotEmpty ? fullName : user.displayName,
-      );
+  //     // Save user details including Apple-specific information
+  //     await _saveUserDetailsToFirestore(
+  //       user,
+  //       appleUserIdentifier: credential.userIdentifier,
+  //       appleEmail: credential.email,
+  //       appleName: fullName.isNotEmpty ? fullName : user.displayName,
+  //     );
 
-      uid.value = userCredential.user!.uid;
+  //     uid.value = userCredential.user!.uid;
 
-      return true;
-    } catch (error) {
-      if (kDebugMode) {
-        print('Apple Sign-In Error: $error');
-      }
-      return false;
-    }
-  }
+  //     return true;
+  //   } catch (error) {
+  //     if (kDebugMode) {
+  //       print('Apple Sign-In Error: $error');
+  //     }
+  //     return false;
+  //   }
+  // }
 
   Future<void> _saveUserDetailsToFirestore(
     User user, {
