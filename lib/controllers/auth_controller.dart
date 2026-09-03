@@ -272,7 +272,6 @@ class AuthController extends GetxController {
 
   Future<void> _saveUserDetailsToFirestore(
     User user, {
-    String? appleUserIdentifier,
     String? appleEmail,
     String? appleName,
   }) async {

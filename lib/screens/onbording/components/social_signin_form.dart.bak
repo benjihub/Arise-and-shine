@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:arise_and_shine/controllers/auth_controller.dart';
 import 'package:arise_and_shine/controllers/profile_controller.dart';
 import 'package:arise_and_shine/entry_point.dart';
@@ -104,6 +106,62 @@ class SocialSignInForm extends StatelessWidget {
             ),
           ),
 
+          if (Platform.isIOS) ...[
+            const SizedBox(width: 16), // Add spacing before Apple button
+
+            // Apple Sign-In Button
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                onPressed: () {
+//                   authController.appleSignIn().then(
+//                     (value) {
+//                       if (value == true) {
+//                         profileController.fetchUserDetails().then(
+//                           (value) {
+//                             if (value != false) {
+                              profileController.getUserDetails().then(
+                                (value) {
+                                  if (value != null) {
+                                    authController.isSocialloading(false);
+
+                                    Get.offAll(
+                                      () => const EntryPoint(),
+                                    );
+
+                                    if (context.mounted) {
+                                      VxToast.show(context,
+                                          msg: "Signed up Successfully");
+                                    }
+
+                                    authController.clearAuthData();
+                                  } else {
+                                    authController.isSocialloading(false);
+                                  }
+                                },
+                              );
+                            } else {
+                              authController.isSocialloading(false);
+                            }
+                          },
+                        );
+                      }
+                    },
+                  );
+                },
+                icon: SvgPicture.asset(
+                  "assets/icons/apple.svg",
+                  height: 30,
+                  width: 30,
+                  colorFilter:
+                      const ColorFilter.mode(blackColor, BlendMode.srcIn),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
