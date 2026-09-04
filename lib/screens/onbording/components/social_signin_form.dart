@@ -103,7 +103,6 @@ class SocialSignInForm extends StatelessWidget {
               ),
             ),
           ),
-
         ],
       ),
     );
