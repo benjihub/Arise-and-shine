@@ -1,11 +1,9 @@
 import 'package:arise_and_shine/controllers/auth_controller.dart';
 import 'package:arise_and_shine/controllers/profile_controller.dart';
 import 'package:arise_and_shine/entry_point.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../constants/constants.dart';
 
 class SocialSignInForm extends StatelessWidget {
@@ -77,24 +75,6 @@ class SocialSignInForm extends StatelessWidget {
               ),
             ),
           ),
-          if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-            SizedBox(
-              width: 220,
-              height: 48,
-              child: SignInWithAppleButton(
-                style: SignInWithAppleButtonStyle.black,
-                onPressed: () {
-                  if (authController.isSocialloading.value) return;
-                  _completeSocialSignIn(
-                    context,
-                    authController,
-                    profileController,
-                    authController.appleSignIn,
-                  );
-                },
-              ),
-            ),
-          ],
         ],
       ),
     );

@@ -223,53 +223,7 @@ class AuthController extends GetxController {
     nameController.clear();
   }
 
-  /// Uses FirebaseAuth's native Apple provider. It creates and validates the
-  /// nonce internally, avoiding the unsafe hand-built Apple credential flow
-  /// that was previously commented out here.
-  Future<UserCredential?> appleSignIn() async {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
-      _showAuthError('Sign in with Apple is available on iPhone.');
-      return null;
-    }
-
-    try {
-      isSocialloading(true);
-      debugPrint('Starting Apple sign-in.');
-      final provider = AppleAuthProvider()
-        ..addScope('email')
-        ..addScope('name');
-      final userCredential =
-          await FirebaseAuth.instance.signInWithProvider(provider);
-      final user = userCredential.user;
-      if (user == null) {
-        throw FirebaseAuthException(
-          code: 'null-user',
-          message: 'Apple did not return a user account.',
-        );
-      }
-
-      await _saveUserDetailsToFirestore(user);
-      uid.value = user.uid;
-      debugPrint('Apple sign-in completed for uid=${user.uid}.');
-      return userCredential;
-    } on FirebaseAuthException catch (error, stackTrace) {
-      _logAuthFailure('Apple sign-in', error, stackTrace);
-      _showAuthError(_messageForAuthError(error));
-      isSocialloading(false);
-      return null;
-    } catch (error, stackTrace) {
-      _logAuthFailure('Apple sign-in', error, stackTrace);
-      _showAuthError('Apple sign-in could not be completed. Please try again.');
-      isSocialloading(false);
-      return null;
-    }
-  }
-
-  Future<void> _saveUserDetailsToFirestore(
-    User user, {
-    String? appleEmail,
-    String? appleName,
-  }) async {
+  Future<void> _saveUserDetailsToFirestore(User user) async {
     try {
       final userDoc =
           FirebaseFirestore.instance.collection('users').doc(user.uid);
@@ -278,9 +232,9 @@ class AuthController extends GetxController {
       if (!snapshot.exists) {
         await userDoc.set({
           'id': user.uid,
-          'email': appleEmail ?? user.email,
+          'email': user.email,
           'phone': '',
-          'name': appleName ?? user.displayName,
+          'name': user.displayName,
           'profile_image_url': user.photoURL ?? "",
           'preferred_language': currentLanguage.value,
           'createdAt': FieldValue.serverTimestamp(),

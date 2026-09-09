@@ -33,9 +33,6 @@ dependencies:
   firebase_core: ^3.12.1
   webview_flutter: ^4.10.0
   google_sign_in: ^6.2.2
-  # Provides Apple's approved Sign in with Apple button. FirebaseAuth performs
-  # the native credential exchange in AuthController.appleSignIn().
-  sign_in_with_apple: ^7.0.1
   firebase_storage: ^12.4.4
   intl_phone_number_input: ^0.7.4
   share_plus: ^10.1.3
