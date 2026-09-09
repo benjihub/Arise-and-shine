@@ -152,7 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? loadingIndicator(color: goldenColor)
                               : ourButton(
                                   onPress: isChecked == true
-                                      ? () {
+                                      ? () async {
                                           if (authController
                                               .isNumberValid.isTrue) {
                                             homeController.hideKeyboard();
@@ -201,62 +201,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                                                 homeController.hideKeyboard();
 
-                                                authController
-                                                    .signupMethod(
-                                                        context: context)
-                                                    .then(
-                                                  (value) {
-                                                    if (value != null) {
-                                                      profileController
-                                                          .fetchUserDetails()
-                                                          .then(
-                                                        (value) {
-                                                          if (value != false) {
-                                                            profileController
-                                                                .getUserDetails()
-                                                                .then(
-                                                              (value) {
-                                                                if (value !=
-                                                                    null) {
-                                                                  authController
-                                                                      .isloading(
-                                                                          false);
+                                                try {
+                                                  final credential =
+                                                      await authController
+                                                          .signupMethod(
+                                                              context: context);
+                                                  if (credential == null) return;
 
-                                                                  Get.offAll(
-                                                                    () =>
-                                                                        const EntryPoint(),
-                                                                    transition:
-                                                                        Transition
-                                                                            .fadeIn,
-                                                                  );
+                                                  final fetched =
+                                                      await profileController
+                                                          .fetchUserDetails();
+                                                  final profile = fetched == false
+                                                      ? null
+                                                      : await profileController
+                                                          .getUserDetails();
+                                                  if (profile == null) {
+                                                    Get.snackbar(
+                                                        'Sign-up failed',
+                                                        'Unable to load your profile.',
+                                                        colorText: whiteColor,
+                                                        backgroundColor:
+                                                            errorColor);
+                                                    return;
+                                                  }
 
-                                                                  VxToast.show(
-                                                                      context,
-                                                                      msg:
-                                                                          "Signed up Successfully");
-
-                                                                  authController
-                                                                      .clearAuthData();
-                                                                } else {
-                                                                  authController
-                                                                      .isloading(
-                                                                          false);
-                                                                }
-                                                              },
-                                                            );
-                                                          } else {
-                                                            authController
-                                                                .isloading(
-                                                                    false);
-                                                          }
-                                                        },
-                                                      );
-                                                    } else {
-                                                      authController
-                                                          .isloading(false);
-                                                    }
-                                                  },
-                                                );
+                                                  await authController
+                                                      .clearGuestStatus();
+                                                  authController.clearAuthData();
+                                                  Get.offAll(
+                                                    () => const EntryPoint(),
+                                                    transition:
+                                                        Transition.fadeIn,
+                                                  );
+                                                  if (context.mounted) {
+                                                    VxToast.show(context,
+                                                        msg:
+                                                            'Signed up successfully');
+                                                  }
+                                                } catch (error, stackTrace) {
+                                                  debugPrint(
+                                                      'Email sign-up completion failed: $error');
+                                                  debugPrintStack(
+                                                      stackTrace: stackTrace);
+                                                  Get.snackbar('Sign-up failed',
+                                                      'Unable to complete sign-up. Please try again.',
+                                                      colorText: whiteColor,
+                                                      backgroundColor:
+                                                          errorColor);
+                                                } finally {
+                                                  authController.isloading(false);
+                                                }
                                               } else {
                                                 Get.snackbar("Error",
                                                     "Phone number is not valid",

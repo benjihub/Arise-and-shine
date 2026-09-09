@@ -19,7 +19,7 @@
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
-		<string>2.2.0</string>
+		<string>$(FLUTTER_BUILD_NAME)</string>
 		<key>CFBundleSignature</key>
 		<string>????</string>
 		<key>CFBundleURLTypes</key>
@@ -29,7 +29,8 @@
 				<string>Editor</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>com.googleusercontent.apps.567945579519-e61skm71590gkeqimflvoeo87ho6dv8o</string>
+					<!-- Must exactly match REVERSED_CLIENT_ID in GoogleService-Info.plist. -->
+					<string>com.googleusercontent.apps.567945579519-fscuvvm786b5ugnnr3jkd9rb3o548svh</string>
 				</array>
 			</dict>
 		</array>

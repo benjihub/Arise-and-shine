@@ -66,39 +66,33 @@ class AuthController extends GetxController {
       await auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          isRequestingOTPLoading(false);
+          try {
+            userCredential = await auth.signInWithCredential(credential);
+            final user = userCredential?.user;
+            if (user == null) {
+              throw FirebaseAuthException(code: 'null-user');
+            }
+            uid.value = user.uid;
+            await firestore.collection('users').doc(uid.value).set({
+              'id': uid.value,
+              'phone': phoneController.text,
+            }, SetOptions(merge: true));
 
-          userCredential = await auth.signInWithCredential(credential);
-
-          Get.snackbar('Success', 'Phone number automatically verified',
-              colorText: whiteColor, backgroundColor: primaryColor);
-
-          uid.value = userCredential!.user!.uid;
-
-          await firestore.collection('users').doc(uid.value).set({
-            'id': uid.value,
-            'phone': phoneController.text,
-          }, SetOptions(merge: true));
-
-          profileController.fetchUserDetails().then(
-            (value) {
-              if (value != false) {
-                profileController.getUserDetails().then(
-                  (value) {
-                    if (value != null) {
-                      Get.offAll(
-                        () => const EntryPoint(),
-                      );
-                    }
-                  },
-                );
-              } else {
-                Get.to(
-                  () => const UpdateProfileScreen(),
-                );
-              }
-            },
-          );
+            final fetched = await profileController.fetchUserDetails();
+            if (fetched != false &&
+                await profileController.getUserDetails() != null) {
+              Get.offAll(() => const EntryPoint());
+            } else {
+              Get.to(() => const UpdateProfileScreen());
+            }
+            Get.snackbar('Success', 'Phone number automatically verified',
+                colorText: whiteColor, backgroundColor: primaryColor);
+          } catch (error, stackTrace) {
+            _logAuthFailure('Automatic phone sign-in', error, stackTrace);
+            _showAuthError('Phone sign-in could not be completed.');
+          } finally {
+            isRequestingOTPLoading(false);
+          }
         },
         verificationFailed: (FirebaseAuthException e) {
           isRequestingOTPLoading(false);
@@ -150,7 +144,11 @@ class AuthController extends GetxController {
       );
       userCredential = await auth.signInWithCredential(credential);
 
-      uid.value = userCredential.user!.uid;
+      final user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(code: 'null-user');
+      }
+      uid.value = user.uid;
 
       await firestore.collection('users').doc(uid.value).set({
         'id': uid.value,
@@ -225,50 +223,47 @@ class AuthController extends GetxController {
     nameController.clear();
   }
 
-  // Apple SignIn
-  // Future<dynamic> appleSignIn() async {
-  //   try {
-  //     final credential = await SignInWithApple.getAppleIDCredential(
-  //       scopes: [
-  //         AppleIDAuthorizationScopes.email,
-  //         AppleIDAuthorizationScopes.fullName,
-  //       ],
-  //     );
+  /// Uses FirebaseAuth's native Apple provider. It creates and validates the
+  /// nonce internally, avoiding the unsafe hand-built Apple credential flow
+  /// that was previously commented out here.
+  Future<UserCredential?> appleSignIn() async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      _showAuthError('Sign in with Apple is available on iPhone.');
+      return null;
+    }
 
-  //     isSocialloading(true);
+    try {
+      isSocialloading(true);
+      debugPrint('Starting Apple sign-in.');
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+      final userCredential =
+          await FirebaseAuth.instance.signInWithProvider(provider);
+      final user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'null-user',
+          message: 'Apple did not return a user account.',
+        );
+      }
 
-  //     // Create full name from given and family name
-  //     final fullName = [credential.givenName, credential.familyName]
-  //         .where((name) => name != null)
-  //         .join(' ');
-
-  //     final oauthCredential = OAuthProvider("apple.com").credential(
-  //       idToken: credential.identityToken,
-  //       accessToken: credential.authorizationCode,
-  //     );
-
-  //     final UserCredential userCredential =
-  //         await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-  //     final User user = userCredential.user!;
-
-  //     // Save user details including Apple-specific information
-  //     await _saveUserDetailsToFirestore(
-  //       user,
-  //       appleUserIdentifier: credential.userIdentifier,
-  //       appleEmail: credential.email,
-  //       appleName: fullName.isNotEmpty ? fullName : user.displayName,
-  //     );
-
-  //     uid.value = userCredential.user!.uid;
-
-  //     return true;
-  //   } catch (error) {
-  //     if (kDebugMode) {
-  //       print('Apple Sign-In Error: $error');
-  //     }
-  //     return false;
-  //   }
-  // }
+      await _saveUserDetailsToFirestore(user);
+      uid.value = user.uid;
+      debugPrint('Apple sign-in completed for uid=${user.uid}.');
+      return userCredential;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      _logAuthFailure('Apple sign-in', error, stackTrace);
+      _showAuthError(_messageForAuthError(error));
+      isSocialloading(false);
+      return null;
+    } catch (error, stackTrace) {
+      _logAuthFailure('Apple sign-in', error, stackTrace);
+      _showAuthError('Apple sign-in could not be completed. Please try again.');
+      isSocialloading(false);
+      return null;
+    }
+  }
 
   Future<void> _saveUserDetailsToFirestore(
     User user, {
@@ -303,14 +298,26 @@ class AuthController extends GetxController {
   }
 
   // Google SignIn
-  Future<dynamic> googleSignIn() async {
+  Future<UserCredential?> googleSignIn() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser!.authentication;
-
       isSocialloading(true);
+      debugPrint('Starting Google sign-in.');
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // Cancellation is an expected outcome, not an error and never uses !.
+        debugPrint('Google sign-in cancelled by user.');
+        isSocialloading(false);
+        return null;
+      }
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-google-id-token',
+          message: 'Google did not return an ID token.',
+        );
+      }
 
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -319,31 +326,56 @@ class AuthController extends GetxController {
 
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
-      final User user = userCredential.user!;
+      final User? user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'null-user',
+          message: 'Firebase did not return a user account.',
+        );
+      }
 
       // Save user details to Firestore
       await _saveUserDetailsToFirestore(user);
 
-      uid.value = userCredential.user!.uid;
+      uid.value = user.uid;
+      debugPrint('Google sign-in completed for uid=${user.uid}.');
 
-      return true;
-    } catch (error) {
-      // print('Google Sign-In Error: $error');
-      return false;
+      return userCredential;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      _logAuthFailure('Google sign-in', error, stackTrace);
+      _showAuthError(_messageForAuthError(error));
+      isSocialloading(false);
+      return null;
+    } catch (error, stackTrace) {
+      _logAuthFailure('Google sign-in', error, stackTrace);
+      _showAuthError('Google sign-in could not be completed. Please try again.');
+      isSocialloading(false);
+      return null;
     }
   }
 
   Future<UserCredential?> loginMethod({context}) async {
     UserCredential? userCredential;
 
+    final email = emailController.text.trim();
+    final password = passwordController.text;
     try {
+      debugPrint('Starting email sign-in for $email.');
       userCredential = await auth.signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text);
+          email: email, password: password);
 
-      uid.value = userCredential.user!.uid;
+      final user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(code: 'null-user');
+      }
+      uid.value = user.uid;
+      debugPrint('Email sign-in completed for uid=${user.uid}.');
     } on FirebaseAuthException catch (e) {
-      VxToast.show(context, msg: e.toString());
+      _logAuthFailure('Email sign-in', e, StackTrace.current);
+      VxToast.show(context, msg: _messageForAuthError(e));
+    } catch (error, stackTrace) {
+      _logAuthFailure('Email sign-in', error, stackTrace);
+      VxToast.show(context, msg: 'Unable to sign in. Please try again.');
     }
     return userCredential;
   }
@@ -353,15 +385,18 @@ class AuthController extends GetxController {
 
     try {
       userCredential = await auth.createUserWithEmailAndPassword(
-          email: signupemailController.text,
+          email: signupemailController.text.trim(),
           password: signuppasswordController.text);
 
-      // Get the user ID
-      uid.value = userCredential.user!.uid;
+      final user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(code: 'null-user');
+      }
+      uid.value = user.uid;
 
       await FirebaseFirestore.instance.collection('users').doc(uid.value).set({
         'id': uid.value,
-        'email': signupemailController.text,
+        'email': signupemailController.text.trim(),
         'name': nameController.text,
         'preferred_language': currentLanguage.value,
         'phone': phoneController.text,
@@ -369,7 +404,12 @@ class AuthController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseAuthException catch (e) {
-      VxToast.show(context, msg: e.toString());
+      _logAuthFailure('Email sign-up', e, StackTrace.current);
+      VxToast.show(context, msg: _messageForAuthError(e));
+    } catch (error, stackTrace) {
+      _logAuthFailure('Email sign-up', error, stackTrace);
+      VxToast.show(context,
+          msg: 'Unable to create the account. Please try again.');
     }
 
     return userCredential;
@@ -384,6 +424,43 @@ class AuthController extends GetxController {
     } catch (e) {
       VxToast.show(context, msg: e.toString());
     }
+  }
+
+  void _showAuthError(String message) {
+    Get.snackbar(
+      'Sign-in failed',
+      message,
+      colorText: whiteColor,
+      backgroundColor: errorColor,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  String _messageForAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-credential':
+      case 'wrong-password':
+      case 'user-not-found':
+        return 'The email address or password is incorrect.';
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a moment and try again.';
+      case 'network-request-failed':
+        return 'Check your internet connection and try again.';
+      case 'account-exists-with-different-credential':
+        return 'This email is already linked to a different sign-in method.';
+      default:
+        return error.message ?? 'Authentication failed. Please try again.';
+    }
+  }
+
+  void _logAuthFailure(String operation, Object error, StackTrace stackTrace) {
+    // Never log passwords, tokens, authorization codes, or full credentials.
+    debugPrint('$operation failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   Future<void> forgotPassword(String email) async {

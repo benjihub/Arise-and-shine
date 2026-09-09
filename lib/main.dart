@@ -12,19 +12,50 @@ import 'package:get/get.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await AppTranslations.loadTranslations();
+  try {
+    await AppTranslations.loadTranslations();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized for ${defaultTargetPlatform.name}.');
 
-  await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
+    // Notification permission must never prevent authentication or app launch.
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  } catch (error, stackTrace) {
+    debugPrint('Firebase startup failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+    runApp(const _StartupErrorApp());
+    return;
+  }
 
   runApp(MyApp());
+}
+
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'The app could not start securely. Please check your internet '
+              'connection and try again.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {

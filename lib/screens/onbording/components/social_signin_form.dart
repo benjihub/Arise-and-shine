@@ -1,9 +1,11 @@
 import 'package:arise_and_shine/controllers/auth_controller.dart';
 import 'package:arise_and_shine/controllers/profile_controller.dart';
 import 'package:arise_and_shine/entry_point.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../constants/constants.dart';
 
 class SocialSignInForm extends StatelessWidget {
@@ -15,8 +17,10 @@ class SocialSignInForm extends StatelessWidget {
     var profileController = Get.put(ProfileController());
 
     return Obx(
-      () => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      () => Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 16,
+        runSpacing: 16,
         children: [
           // Phone/Email Toggle Button
           Container(
@@ -51,8 +55,6 @@ class SocialSignInForm extends StatelessWidget {
                   ),
           ),
 
-          const SizedBox(width: 16), // Add spacing between buttons
-
           // Google Sign-In Button
           Container(
             decoration: const BoxDecoration(
@@ -60,42 +62,14 @@ class SocialSignInForm extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              onPressed: () {
-                authController.googleSignIn().then(
-                  (value) {
-                    if (value == true) {
-                      profileController.fetchUserDetails().then(
-                        (value) {
-                          if (value != false) {
-                            profileController.getUserDetails().then(
-                              (value) {
-                                if (value != null) {
-                                  authController.isSocialloading(false);
-
-                                  Get.offAll(
-                                    () => const EntryPoint(),
-                                  );
-
-                                  if (context.mounted) {
-                                    VxToast.show(context,
-                                        msg: "Signed in Successfully");
-                                  }
-
-                                  authController.clearAuthData();
-                                } else {
-                                  authController.isSocialloading(false);
-                                }
-                              },
-                            );
-                          } else {
-                            authController.isSocialloading(false);
-                          }
-                        },
-                      );
-                    }
-                  },
-                );
-              },
+              onPressed: authController.isSocialloading.value
+                  ? null
+                  : () => _completeSocialSignIn(
+                        context,
+                        authController,
+                        profileController,
+                        authController.googleSignIn,
+                      ),
               icon: SvgPicture.asset(
                 "assets/icons/google.svg",
                 height: 30,
@@ -103,8 +77,63 @@ class SocialSignInForm extends StatelessWidget {
               ),
             ),
           ),
+          if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+            SizedBox(
+              width: 220,
+              height: 48,
+              child: SignInWithAppleButton(
+                style: SignInWithAppleButtonStyle.black,
+                onPressed: () {
+                  if (authController.isSocialloading.value) return;
+                  _completeSocialSignIn(
+                    context,
+                    authController,
+                    profileController,
+                    authController.appleSignIn,
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _completeSocialSignIn(
+    BuildContext context,
+    AuthController authController,
+    ProfileController profileController,
+    Future<dynamic> Function() signIn,
+  ) async {
+    try {
+      final credential = await signIn();
+      if (credential == null) return;
+
+      final fetched = await profileController.fetchUserDetails();
+      final profile = fetched == false
+          ? null
+          : await profileController.getUserDetails();
+      if (profile == null) {
+        Get.snackbar('Sign-in failed', 'Unable to load your profile.',
+            colorText: whiteColor, backgroundColor: errorColor);
+        return;
+      }
+
+      await authController.clearGuestStatus();
+      authController.clearAuthData();
+      Get.offAll(() => const EntryPoint());
+      if (context.mounted) {
+        VxToast.show(context, msg: 'Signed in successfully');
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Completing social sign-in failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      Get.snackbar('Sign-in failed',
+          'Unable to complete sign-in. Please try again.',
+          colorText: whiteColor, backgroundColor: errorColor);
+    } finally {
+      authController.isSocialloading(false);
+    }
   }
 }

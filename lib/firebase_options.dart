@@ -43,7 +43,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCaUV06G4XMs1r5gV43jDRy9uqu36I9jew',
-    appId: '1:567945579519:android:543e82a17e76a5389b35ca',
+    // Must match ios/Runner/GoogleService-Info.plist (GOOGLE_APP_ID), not
+    // the Android app ID. Passing the Android ID on iOS initializes the
+    // Firebase SDK with a different registered app.
+    appId: '1:567945579519:ios:f3611026a96df3b29b35ca',
     messagingSenderId: '567945579519',
     projectId: 'arise-and-shine-tanzania',
     storageBucket: 'arise-and-shine-tanzania.firebasestorage.app',

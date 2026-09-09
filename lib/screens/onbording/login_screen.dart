@@ -108,62 +108,50 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: goldenColor,
                                   title: "login".tr,
                                   textColor: primaryColor,
-                                  onPress: () {
+                                  onPress: () async {
                                     if (formKey.currentState!.validate()) {
                                       authController.isloading(true);
                                       homeController.hideKeyboard();
+                                      try {
+                                        final credential = await authController
+                                            .loginMethod(context: context);
+                                        if (credential == null) return;
 
-                                      authController
-                                          .loginMethod(context: context)
-                                          .then(
-                                        (value) {
-                                          if (value != null) {
-                                            profileController
-                                                .fetchUserDetails()
-                                                .then(
-                                              (value) {
-                                                if (value != false) {
-                                                  profileController
-                                                      .getUserDetails()
-                                                      .then(
-                                                    (value) {
-                                                      if (value != null) {
-                                                        authController
-                                                            .isloading(false);
+                                        final fetched = await profileController
+                                            .fetchUserDetails();
+                                        final profile = fetched == false
+                                            ? null
+                                            : await profileController
+                                                .getUserDetails();
+                                        if (profile == null) {
+                                          Get.snackbar(
+                                              'Sign-in failed',
+                                              'Unable to load your profile.',
+                                              colorText: whiteColor,
+                                              backgroundColor: errorColor);
+                                          return;
+                                        }
 
-                                                        Get.offAll(
-                                                          () =>
-                                                              const EntryPoint(),
-                                                          transition:
-                                                              Transition.fadeIn,
-                                                        );
-
-                                                        authController
-                                                            .clearGuestStatus();
-
-                                                        VxToast.show(context,
-                                                            msg:
-                                                                "Logged in Successfully");
-
-                                                        authController
-                                                            .clearAuthData();
-                                                      } else {
-                                                        authController
-                                                            .isloading(false);
-                                                      }
-                                                    },
-                                                  );
-                                                } else {
-                                                  authController
-                                                      .isloading(false);
-                                                }
-                                              },
-                                            );
-                                          } else {
-                                            authController.isloading(false);
-                                          }
-                                        },
-                                      );
+                                        await authController.clearGuestStatus();
+                                        authController.clearAuthData();
+                                        Get.offAll(
+                                          () => const EntryPoint(),
+                                          transition: Transition.fadeIn,
+                                        );
+                                        if (context.mounted) {
+                                          VxToast.show(context,
+                                              msg: 'Logged in successfully');
+                                        }
+                                      } catch (error, stackTrace) {
+                                        debugPrint('Email login completion failed: $error');
+                                        debugPrintStack(stackTrace: stackTrace);
+                                        Get.snackbar('Sign-in failed',
+                                            'Unable to complete sign-in. Please try again.',
+                                            colorText: whiteColor,
+                                            backgroundColor: errorColor);
+                                      } finally {
+                                        authController.isloading(false);
+                                      }
                                     }
                                   },
                                 ),
