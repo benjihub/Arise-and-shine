@@ -18,7 +18,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('Firebase initialized for ${defaultTargetPlatform.name}.');
+    debugPrint('Firebase initialized successfully.');
 
     // Notification permission must never prevent authentication or app launch.
     await FirebaseMessaging.instance.requestPermission(

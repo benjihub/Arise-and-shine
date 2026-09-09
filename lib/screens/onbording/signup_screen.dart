@@ -191,7 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       ? primaryColor
                                       : whiteColor,
                                   onPress: isChecked == true
-                                      ? () {
+                                      ? () async {
                                           if (_formKey.currentState!
                                               .validate()) {
                                             if (isChecked == true) {
